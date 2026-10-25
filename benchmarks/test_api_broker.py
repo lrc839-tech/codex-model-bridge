@@ -304,9 +304,63 @@ class BrokerTests(unittest.TestCase):
         broker.upstream_opener.open.return_value = Response(b'{"error":{"message":"PRIVATE_UPSTREAM"},"usage":{"prompt_tokens":7,"completion_tokens":3}}')
         with self.assertRaises(error.HTTPError) as failure:
             self.call(profile, {"messages": [{"role": "user", "content": "offline"}]})
-        self.assertNotIn(b"PRIVATE_UPSTREAM", failure.exception.read())
+        try:
+            self.assertNotIn(b"PRIVATE_UPSTREAM", failure.exception.read())
+        finally:
+            failure.exception.close()
         self.assertEqual(10, self.budget.ledger.summary()["total_tokens"])
         self.assertEqual(1, self.budget.ledger.summary()["requests_failed"])
+        self.assertEqual(10, broker.routes[profile["api_key"]]["ledger"].summary()["total_tokens"])
+
+    def assert_error_is_persisted_before_response(self, *, result=None, exception=None, expected_total):
+        broker, profile = self.relay()
+        broker.upstream_opener = mock.Mock()
+        if exception is not None:
+            broker.upstream_opener.open.side_effect = exception
+        else:
+            broker.upstream_opener.open.return_value = Response(json.dumps(result).encode())
+        local = broker.routes[profile["api_key"]]["ledger"]
+        observed_writes = []
+        testcase = self
+
+        class ObservedOutput(io.BytesIO):
+            def write(self, data):
+                # This runs for response headers as well as body, deterministically
+                # before the client could see a single error-response byte.
+                for ledger in (testcase.budget.ledger, local):
+                    summary = ledger.summary()
+                    testcase.assertEqual((1, 1, 0), tuple(summary[key] for key in
+                                         ("requests_started", "requests_finished", "unfinished_requests")))
+                    testcase.assertEqual(expected_total, summary["total_tokens"])
+                    testcase.assertEqual(1, summary["requests_failed"])
+                observed_writes.append(1)
+                return super().write(data)
+
+        body = json.dumps({"messages": [{"role": "user", "content": "offline"}]}).encode()
+        handler = object.__new__(broker.server.RequestHandlerClass)
+        handler.headers = {"Authorization": "Bearer " + profile["api_key"], "Content-Length": str(len(body))}
+        handler.path = "/v1/chat/completions"
+        handler.request_version = "HTTP/1.1"
+        handler.command = "POST"
+        handler.requestline = "POST /v1/chat/completions HTTP/1.1"
+        handler.server = broker.server
+        handler.connection = mock.Mock()
+        handler.rfile = io.BytesIO(body)
+        handler.wfile = ObservedOutput()
+        handler.do_POST()
+        self.assertTrue(observed_writes)
+        self.assertIn(b"502", handler.wfile.getvalue())
+        self.assertNotIn(b"PRIVATE_UPSTREAM", handler.wfile.getvalue())
+        self.assertEqual(1, broker.upstream_opener.open.call_count)
+        self.assertTrue(broker.settle(0)["settled"])
+
+    def test_api_error_accounting_is_durable_before_first_response_byte(self):
+        self.assert_error_is_persisted_before_response(result={"error": {"message": "PRIVATE_UPSTREAM"},
+             "choices": [{"finish_reason": {"private": "untrusted metadata"}}],
+             "usage": {"prompt_tokens": 7, "completion_tokens": 3}}, expected_total=10)
+
+    def test_transport_error_is_finished_unknown_before_first_response_byte(self):
+        self.assert_error_is_persisted_before_response(exception=OSError("PRIVATE_UPSTREAM"), expected_total=None)
 
     def test_response_byte_limit_stops_future_submissions_without_retry(self):
         broker, profile = self.relay()

@@ -25,6 +25,7 @@ from runtime.providers import ProviderClient, _NoRedirect
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 MAX_SSE_LINE_BYTES = 1024 * 1024
 MAX_REQUEST_SECONDS = 120
+_FINISH_REASONS = {"stop", "length", "tool_calls", "content_filter", "end_turn", "tool_use", "max_tokens", "stop_sequence", "refusal"}
 _ALLOWED_FIELDS = {"messages", "model", "tools", "tool_choice", "stream", "stream_options",
                    "thinking", "reasoning_effort", "max_tokens", "max_completion_tokens", "n",
                    "temperature", "top_p", "frequency_penalty", "presence_penalty", "stop",
@@ -429,6 +430,9 @@ class APIBroker:
                                     if usage is not None:
                                         broker._publish_usage(active, usage)
                                     failure = "upstream_api_error"
+                                    # Content-Length lets a client return as soon as this
+                                    # error body arrives. Persist both ledgers first.
+                                    broker._finish_request(active, usage=usage, finish_reason=finish, failure=failure)
                                     self.reject(502, failure)
                                 else:
                                     if usage is not None:
@@ -441,10 +445,9 @@ class APIBroker:
                             exc.close()
                         failure = failure or "upstream_or_client_failure"
                         if not headers_sent:
+                            broker._finish_request(active, usage=usage, finish_reason=finish, failure=failure)
                             self.reject(502, failure)
                     finally:
-                        if finish not in {None, "stop", "length", "tool_calls", "content_filter", "end_turn", "tool_use", "max_tokens", "stop_sequence", "refusal"}:
-                            finish = "other"
                         broker._finish_request(active, usage=usage, finish_reason=finish, failure=failure)
                         self.close_connection = True
 
@@ -498,6 +501,8 @@ class APIBroker:
                 active["known_usage"] = usage
 
     def _finish_request(self, active, *, usage=None, finish_reason=None, failure=None):
+        if finish_reason is not None and (not isinstance(finish_reason, str) or finish_reason not in _FINISH_REASONS):
+            finish_reason = "other"
         with self._activity:
             if active["finished"]:
                 return
