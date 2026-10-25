@@ -20,3 +20,7 @@ logs/
 *.zip
 *.dmg
 SHA256SUMS
+benchmarks/.runtime/
+benchmarks/.private/
+benchmarks/runner/local-readiness.json
+benchmarks/dsh-preflight-evidence.json

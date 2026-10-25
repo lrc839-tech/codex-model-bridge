@@ -1,0 +1,11 @@
+{
+  "commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+  "files": {
+    ".docs/instructions.md": "025999b58db674568be4d2239fc577b749ec40e98593fc3638e21e72915ad4c5",
+    ".meta/example.py": "728655581209a08f392aa2d6a5060bca855f53ea3e96f66a86db738dbf23d751",
+    "book_store.py": "5c22fe209f90b16dbbacff457199d0b14152b48616c875085c8ff1f6f7188ec2",
+    "book_store_test.py": "59204f1edbb004c2402cea2aa7d1389c5293766fae4ce5d79a83627970c7acf3"
+  },
+  "repository": "exercism/python",
+  "source_dir": "exercises/practice/book-store/"
+}

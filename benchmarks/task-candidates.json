@@ -1,0 +1,789 @@
+{
+  "schema_version": 1,
+  "prepared_utc": "2026-10-25T12:20:05Z",
+  "status": "source downloaded; official reference/starter gates run; no model benchmark run",
+  "selection": {
+    "seed": "codex-model-bridge-pilot-2026-10-25-v1",
+    "method": "one per preregistered category, minimum sha256(seed + ':' + category + ':' + slug)",
+    "pool": {
+      "parsing": [
+        "forth",
+        "sgf-parsing"
+      ],
+      "state-machine": [
+        "bowling",
+        "bank-account"
+      ],
+      "reactivity-io": [
+        "react",
+        "paasio"
+      ],
+      "constraint-search": [
+        "word-search",
+        "dominoes",
+        "alphametics"
+      ],
+      "tree-state": [
+        "zipper",
+        "satellite"
+      ],
+      "optimization": [
+        "book-store",
+        "knapsack",
+        "two-bucket"
+      ]
+    },
+    "task_count": 6,
+    "arms": [
+      "codex",
+      "hybrid",
+      "deepseek-harness"
+    ],
+    "repeats": 1,
+    "scheduled_runs": 18,
+    "no_selection_based_on_model_results": true
+  },
+  "source": {
+    "repository": "https://github.com/exercism/python",
+    "commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+    "license": "MIT",
+    "supported_python": "3.10 through 3.13 per pinned upstream README",
+    "practice_exercise_count": 142
+  },
+  "tasks": [
+    {
+      "id": "exercism-python-sgf-parsing",
+      "slug": "sgf-parsing",
+      "category": "parsing",
+      "upstream_difficulty": 7,
+      "fixture_dir": "benchmarks/fixtures/exercism-python/sgf-parsing",
+      "evaluator_dir": "benchmarks/evaluators/exercism-python/sgf-parsing",
+      "solution_files": [
+        "sgf_parsing.py"
+      ],
+      "source_url": "https://github.com/exercism/python/tree/6105f6d9d3ef66ce3d5c8f529d2882af3d76b706/exercises/practice/sgf-parsing",
+      "source_commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+      "selection_pool": [
+        "forth",
+        "sgf-parsing"
+      ],
+      "selection_rank": [
+        "sgf-parsing",
+        "forth"
+      ],
+      "instructions_file": "INSTRUCTIONS.md",
+      "interface_file": "INTERFACE.md",
+      "fixture_files": {
+        "INSTRUCTIONS.md": "19f708b010c410aac3ff7d28bda8ccec7ff7807d0bbcf674bc51e5639c24edb1",
+        "INTERFACE.md": "d67813d05262baea0ba7947bdc7f9600945a008bcb6b95ef4fa428b691774e6a",
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "sgf_parsing.py": "e821e6d68abd9336a222d56049ed9fb89c001b6d8ac62e2d10da44a36f76de9d"
+      },
+      "fixture_sha256": "e07ad16dc69ef726fb6baea9513b11820f3febb6f2fdbdc574f369cbc0176482",
+      "evaluator_files": {
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "SOURCE.json": "8cbc8c0bcb381ef597491d9bf95afc95067db40fefc3f21198617d38f2c9e919",
+        "reference/sgf_parsing.py": "2382065cc01d03b7348eb42cfd7db9899565eccd85fcc6cf8199eb2627b5a226",
+        "sgf_parsing_test.py": "d4207e6db303767a3cc407c048a8fb3d5271a48c9cafb396442a9a873f076e0d"
+      },
+      "grader_sha256": "cf77f9427eb10d218ba7494e10dddd26e5761debd70acd8308509a1b05d84091",
+      "task_prompt_sha256": "262feb301a809fa4da6bd601d354a23f668e4a6773a16b26c218db66f567aa4c",
+      "grading": {
+        "argv": [
+          "python3",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          ".",
+          "-p",
+          "*_test.py",
+          "-v"
+        ],
+        "pattern": "*_test.py",
+        "total_tests": 23,
+        "timeout_seconds": 60,
+        "copy_files": [
+          "sgf_parsing_test.py"
+        ],
+        "reference_solution_map": {
+          "sgf_parsing.py": "reference/sgf_parsing.py"
+        },
+        "pass_rule": "exit_code == 0 AND expected test count AND no skipped tests",
+        "test_names": [
+          "test_empty_input",
+          "test_tree_with_no_nodes",
+          "test_node_without_tree",
+          "test_node_without_properties",
+          "test_single_node_tree",
+          "test_multiple_properties",
+          "test_properties_without_delimiter",
+          "test_all_lowercase_property",
+          "test_upper_and_lowercase_property",
+          "test_two_nodes",
+          "test_two_child_trees",
+          "test_multiple_property_values",
+          "test_within_property_values_whitespace_characters_such_as_tab_are_converted_to_spaces",
+          "test_within_property_values_newlines_remain_as_newlines",
+          "test_escaped_closing_bracket_within_property_value_becomes_just_a_closing_bracket",
+          "test_escaped_backslash_in_property_value_becomes_just_a_backslash",
+          "test_opening_bracket_within_property_value_doesn_t_need_to_be_escaped",
+          "test_semicolon_in_property_value_doesn_t_need_to_be_escaped",
+          "test_parentheses_in_property_value_don_t_need_to_be_escaped",
+          "test_escaped_tab_in_property_value_is_converted_to_space",
+          "test_escaped_newline_in_property_value_is_converted_to_nothing_at_all",
+          "test_escaped_t_and_n_in_property_value_are_just_letters_not_whitespace",
+          "test_mixing_various_kinds_of_whitespace_and_escaped_characters_in_property_value"
+        ]
+      },
+      "public_checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "-B",
+            "-c",
+            "from pathlib import Path; compile(Path('sgf_parsing.py').read_text(), 'sgf_parsing.py', 'exec')"
+          ]
+        }
+      ],
+      "validation": {
+        "reference": {
+          "exit_code": 0,
+          "tests_run": 23,
+          "passed": true,
+          "failure_summary": null,
+          "output_sha256": "c9ddc1cc5f03740f31dadb06fde176f8b358fa577fb3aa09f9a318af7aaa2110",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        },
+        "starter": {
+          "exit_code": 1,
+          "tests_run": 23,
+          "passed": false,
+          "failure_summary": "failures=23",
+          "output_sha256": "3c73399f1912b9ee6bfe06f3449c42aa385e5d1d5d1892e8dc5f3aa34a9d4327",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        }
+      },
+      "license": "MIT (preserve Exercism license notices)",
+      "limitations": [
+        "Public exercise and public tests may appear in model training data.",
+        "Withholding local tests is adapted evaluation, not the normal Exercism learning workflow.",
+        "This task evaluates bounded Python implementation, not general intelligence or visual quality."
+      ]
+    },
+    {
+      "id": "exercism-python-bank-account",
+      "slug": "bank-account",
+      "category": "state-machine",
+      "upstream_difficulty": 6,
+      "fixture_dir": "benchmarks/fixtures/exercism-python/bank-account",
+      "evaluator_dir": "benchmarks/evaluators/exercism-python/bank-account",
+      "solution_files": [
+        "bank_account.py"
+      ],
+      "source_url": "https://github.com/exercism/python/tree/6105f6d9d3ef66ce3d5c8f529d2882af3d76b706/exercises/practice/bank-account",
+      "source_commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+      "selection_pool": [
+        "bowling",
+        "bank-account"
+      ],
+      "selection_rank": [
+        "bank-account",
+        "bowling"
+      ],
+      "instructions_file": "INSTRUCTIONS.md",
+      "interface_file": "INTERFACE.md",
+      "fixture_files": {
+        "INSTRUCTIONS.md": "a7312f8309b2c33f741eebec5f3370b0eaf2b8ca10b5716e87259547082ec765",
+        "INTERFACE.md": "e78ed75d065ebf7c3d6987a78b44ad43f1fd6643b39ba3f9593e7927b3763d69",
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "bank_account.py": "ed205e497b0fd700bababdba5d0b2522e67f03d7c166e3ae1d1d9da4dd76d60e"
+      },
+      "fixture_sha256": "10b6a6589bb3215b948d24986daf75b1360fc1e8ba63137709b82aa300a94ea0",
+      "evaluator_files": {
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "SOURCE.json": "b15bacd500a7ab698ce5a82c4d9990e22beccb3defb1c84aa70aea6e0276ee50",
+        "bank_account_test.py": "d4bfe068ce35af331541c5420eefb6e08bb0c1bf3920a2043bc3a4b763f1c380",
+        "reference/bank_account.py": "e75d1fb46070b291a9404f36be076944e5c8e2f20582cf3dd6e9195bde1be7e4"
+      },
+      "grader_sha256": "1e42ca5325799d7fcd0b92c40f53cd953b6b57aebe74f47b4551cd7c3d812719",
+      "task_prompt_sha256": "188ef530769728d958da44dd92acba3a671730e4976ab14bc54b4be1a6be54ec",
+      "grading": {
+        "argv": [
+          "python3",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          ".",
+          "-p",
+          "*_test.py",
+          "-v"
+        ],
+        "pattern": "*_test.py",
+        "total_tests": 16,
+        "timeout_seconds": 60,
+        "copy_files": [
+          "bank_account_test.py"
+        ],
+        "reference_solution_map": {
+          "bank_account.py": "reference/bank_account.py"
+        },
+        "pass_rule": "exit_code == 0 AND expected test count AND no skipped tests",
+        "test_names": [
+          "test_newly_opened_account_has_zero_balance",
+          "test_single_deposit",
+          "test_multiple_deposits",
+          "test_withdraw_once",
+          "test_withdraw_twice",
+          "test_can_do_multiple_operations_sequentially",
+          "test_cannot_check_balance_of_closed_account",
+          "test_cannot_deposit_into_closed_account",
+          "test_cannot_deposit_into_unopened_account",
+          "test_cannot_withdraw_from_closed_account",
+          "test_cannot_close_an_account_that_was_not_opened",
+          "test_cannot_open_an_already_opened_account",
+          "test_reopened_account_does_not_retain_balance",
+          "test_cannot_withdraw_more_than_deposited",
+          "test_cannot_withdraw_negative",
+          "test_cannot_deposit_negative"
+        ]
+      },
+      "public_checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "-B",
+            "-c",
+            "from pathlib import Path; compile(Path('bank_account.py').read_text(), 'bank_account.py', 'exec')"
+          ]
+        }
+      ],
+      "validation": {
+        "reference": {
+          "exit_code": 0,
+          "tests_run": 16,
+          "passed": true,
+          "failure_summary": null,
+          "output_sha256": "467f043a759cbb6e4618e5ca30c4f4ce54c9d552b26f1c331e75bd5db48ab260",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        },
+        "starter": {
+          "exit_code": 1,
+          "tests_run": 16,
+          "passed": false,
+          "failure_summary": "failures=16",
+          "output_sha256": "b0d902bb8ce94d889aa4bb58407d9e83ac24dd12b20cbfa9547751fa44c630e7",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        }
+      },
+      "license": "MIT (preserve Exercism license notices)",
+      "limitations": [
+        "Public exercise and public tests may appear in model training data.",
+        "Withholding local tests is adapted evaluation, not the normal Exercism learning workflow.",
+        "This task evaluates bounded Python implementation, not general intelligence or visual quality."
+      ]
+    },
+    {
+      "id": "exercism-python-paasio",
+      "slug": "paasio",
+      "category": "reactivity-io",
+      "upstream_difficulty": 7,
+      "fixture_dir": "benchmarks/fixtures/exercism-python/paasio",
+      "evaluator_dir": "benchmarks/evaluators/exercism-python/paasio",
+      "solution_files": [
+        "paasio.py"
+      ],
+      "source_url": "https://github.com/exercism/python/tree/6105f6d9d3ef66ce3d5c8f529d2882af3d76b706/exercises/practice/paasio",
+      "source_commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+      "selection_pool": [
+        "react",
+        "paasio"
+      ],
+      "selection_rank": [
+        "paasio",
+        "react"
+      ],
+      "instructions_file": "INSTRUCTIONS.md",
+      "interface_file": "INTERFACE.md",
+      "fixture_files": {
+        "INSTRUCTIONS.md": "f7aa36b6480fb8ee32ec7fd1a8024f7e98c864dcb944e7a116bc667f55b3de48",
+        "INTERFACE.md": "69944ba1e51da41e832184098a903c391c4f5cd8854fe7173ee082c9b2feacb9",
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "paasio.py": "9a6238e652c6289fee1211c8a530563c091b7d386dbe5347a999b28d2a7211e8"
+      },
+      "fixture_sha256": "89914be2abc66263fd15c89b269754ad64747be57f7cf195cb7427d70aa54498",
+      "evaluator_files": {
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "SOURCE.json": "62deadf77e172a2e69167f02f9d08ea2c4110c9d777119f29b2c8a122d20ed41",
+        "paasio_test.py": "4c9aa14b0fdfea01221d5bdff32b9a5569bbfaf412e0985d82502776c41eb569",
+        "reference/paasio.py": "592790e76ac7e4905cd12fbad3449ad5e4a9257c191f994f5155430892544159",
+        "test_utils.py": "9c890fda159fa05e00ee30903d9beb226e0e76eb583d505cd46783bc63546194"
+      },
+      "grader_sha256": "109684ad6ba1f9616a081c4b4a584f661139dd30fd7ec8964dceb076843ad69a",
+      "task_prompt_sha256": "a5c0e75a42d7556e8ec51d474e76d5c3c62573a087d79402ede31f2fc1e8f9c6",
+      "grading": {
+        "argv": [
+          "python3",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          ".",
+          "-p",
+          "*_test.py",
+          "-v"
+        ],
+        "pattern": "*_test.py",
+        "total_tests": 25,
+        "timeout_seconds": 60,
+        "copy_files": [
+          "paasio_test.py",
+          "test_utils.py"
+        ],
+        "reference_solution_map": {
+          "paasio.py": "reference/paasio.py"
+        },
+        "pass_rule": "exit_code == 0 AND expected test count AND no skipped tests",
+        "test_names": [
+          "test_meteredsocket_context_manager",
+          "test_meteredsocket_context_manager_exception_raise",
+          "test_meteredsocket_context_manager_exception_suppress",
+          "test_meteredsocket_recv_once",
+          "test_meteredsocket_recv_multiple",
+          "test_meteredsocket_recv_multiple_chunk",
+          "test_meteredsocket_recv_under_size",
+          "test_meteredsocket_send_once",
+          "test_meteredsocket_send_multiple",
+          "test_meteredsocket_send_under_size",
+          "test_meteredsocket_bufsize_required",
+          "test_meteredsocket_flags_support",
+          "test_meteredsocket_stats_read_only",
+          "test_meteredfile_context_manager",
+          "test_meteredfile_context_manager_exception_raise",
+          "test_meteredfile_context_manager_exception_suppress",
+          "test_meteredfile_iteration",
+          "test_meteredfile_read_once",
+          "test_meteredfile_read_multiple",
+          "test_meteredfile_read_multiple_chunk",
+          "test_meteredfile_read_under_size",
+          "test_meteredfile_write_once",
+          "test_meteredfile_write_multiple",
+          "test_meteredfile_write_under_size",
+          "test_meteredfile_stats_read_only"
+        ]
+      },
+      "public_checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "-B",
+            "-c",
+            "from pathlib import Path; compile(Path('paasio.py').read_text(), 'paasio.py', 'exec')"
+          ]
+        }
+      ],
+      "validation": {
+        "reference": {
+          "exit_code": 0,
+          "tests_run": 25,
+          "passed": true,
+          "failure_summary": null,
+          "output_sha256": "a20ce4f04d54b97b9457c636ac96f3f0856f9a540357898c2f566c4da0fcf7cf",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        },
+        "starter": {
+          "exit_code": 1,
+          "tests_run": 25,
+          "passed": false,
+          "failure_summary": "failures=1, errors=24",
+          "output_sha256": "b8fbe30701fbd10a020ea069c575071854aa37c761e0e200af3fab81568cff1c",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        }
+      },
+      "license": "MIT (preserve Exercism license notices)",
+      "limitations": [
+        "Public exercise and public tests may appear in model training data.",
+        "Withholding local tests is adapted evaluation, not the normal Exercism learning workflow.",
+        "This task evaluates bounded Python implementation, not general intelligence or visual quality."
+      ]
+    },
+    {
+      "id": "exercism-python-word-search",
+      "slug": "word-search",
+      "category": "constraint-search",
+      "upstream_difficulty": 6,
+      "fixture_dir": "benchmarks/fixtures/exercism-python/word-search",
+      "evaluator_dir": "benchmarks/evaluators/exercism-python/word-search",
+      "solution_files": [
+        "word_search.py"
+      ],
+      "source_url": "https://github.com/exercism/python/tree/6105f6d9d3ef66ce3d5c8f529d2882af3d76b706/exercises/practice/word-search",
+      "source_commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+      "selection_pool": [
+        "word-search",
+        "dominoes",
+        "alphametics"
+      ],
+      "selection_rank": [
+        "word-search",
+        "alphametics",
+        "dominoes"
+      ],
+      "instructions_file": "INSTRUCTIONS.md",
+      "interface_file": "INTERFACE.md",
+      "fixture_files": {
+        "INSTRUCTIONS.md": "b7caed192d385a22f18008fd1eabcd159e4b579c05f5c2d339be73aeb4af9818",
+        "INTERFACE.md": "b21f7c10efccd6e90aa9db28094b6dfd951389554dec0f2f2d6f6237c7a8b7c0",
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "word_search.py": "2c57e6458344b273ffc7e9e4d07726cc1c09c3ab215dab92a60f40b4b8947a7b"
+      },
+      "fixture_sha256": "513b5359500bb85d5b397ce0442121ddeba4482a6814a339f57abf27982d6172",
+      "evaluator_files": {
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "SOURCE.json": "621838341144d12fa359bb3b2e1989860e8477e9c7f6954cc9a0c561844b9683",
+        "reference/word_search.py": "ddef232826786a83e26b1fb1a46e530a533f24946e02ec629caf4ddb003bc71d",
+        "word_search_test.py": "fc834a9dc0c75eb4444f7ed1451d8ec0881fa062a3a60374337480892a5a7606"
+      },
+      "grader_sha256": "aafc694951a1cfd09869705e2f14db4fa7896a7a6f602591f2a4a3a81fdd9912",
+      "task_prompt_sha256": "fb66906ef016848d831aee115da6086e68167fc41d840dead4fa840c62899b14",
+      "grading": {
+        "argv": [
+          "python3",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          ".",
+          "-p",
+          "*_test.py",
+          "-v"
+        ],
+        "pattern": "*_test.py",
+        "total_tests": 24,
+        "timeout_seconds": 60,
+        "copy_files": [
+          "word_search_test.py"
+        ],
+        "reference_solution_map": {
+          "word_search.py": "reference/word_search.py"
+        },
+        "pass_rule": "exit_code == 0 AND expected test count AND no skipped tests",
+        "test_names": [
+          "test_should_accept_an_initial_game_grid_and_a_target_search_word",
+          "test_should_locate_one_word_written_left_to_right",
+          "test_should_locate_the_same_word_written_left_to_right_in_a_different_position",
+          "test_should_locate_a_different_left_to_right_word",
+          "test_should_locate_that_different_left_to_right_word_in_a_different_position",
+          "test_should_locate_a_left_to_right_word_in_two_line_grid",
+          "test_should_locate_a_left_to_right_word_in_three_line_grid",
+          "test_should_locate_a_left_to_right_word_in_ten_line_grid",
+          "test_should_locate_that_left_to_right_word_in_a_different_position_in_a_ten_line_grid",
+          "test_should_locate_a_different_left_to_right_word_in_a_ten_line_grid",
+          "test_should_locate_multiple_words",
+          "test_should_locate_a_single_word_written_right_to_left",
+          "test_should_locate_multiple_words_written_in_different_horizontal_directions",
+          "test_should_locate_words_written_top_to_bottom",
+          "test_should_locate_words_written_bottom_to_top",
+          "test_should_locate_words_written_top_left_to_bottom_right",
+          "test_should_locate_words_written_bottom_right_to_top_left",
+          "test_should_locate_words_written_bottom_left_to_top_right",
+          "test_should_locate_words_written_top_right_to_bottom_left",
+          "test_should_fail_to_locate_a_word_that_is_not_in_the_puzzle",
+          "test_should_fail_to_locate_words_that_are_not_on_horizontal_vertical_or_diagonal_lines",
+          "test_should_not_concatenate_different_lines_to_find_a_horizontal_word",
+          "test_should_not_wrap_around_horizontally_to_find_a_word",
+          "test_should_not_wrap_around_vertically_to_find_a_word"
+        ]
+      },
+      "public_checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "-B",
+            "-c",
+            "from pathlib import Path; compile(Path('word_search.py').read_text(), 'word_search.py', 'exec')"
+          ]
+        }
+      ],
+      "validation": {
+        "reference": {
+          "exit_code": 0,
+          "tests_run": 24,
+          "passed": true,
+          "failure_summary": null,
+          "output_sha256": "5c2ebc8ef288f5fada680225e862af579f1fdb57c277836f3cfd281266ddcab5",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        },
+        "starter": {
+          "exit_code": 1,
+          "tests_run": 24,
+          "passed": false,
+          "failure_summary": "failures=19",
+          "output_sha256": "18ad21f708bc7259790c39faa4632662bef017ad9e602afe33c017166f651706",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        }
+      },
+      "license": "MIT (preserve Exercism license notices)",
+      "limitations": [
+        "Public exercise and public tests may appear in model training data.",
+        "Withholding local tests is adapted evaluation, not the normal Exercism learning workflow.",
+        "This task evaluates bounded Python implementation, not general intelligence or visual quality."
+      ]
+    },
+    {
+      "id": "exercism-python-zipper",
+      "slug": "zipper",
+      "category": "tree-state",
+      "upstream_difficulty": 6,
+      "fixture_dir": "benchmarks/fixtures/exercism-python/zipper",
+      "evaluator_dir": "benchmarks/evaluators/exercism-python/zipper",
+      "solution_files": [
+        "zipper.py"
+      ],
+      "source_url": "https://github.com/exercism/python/tree/6105f6d9d3ef66ce3d5c8f529d2882af3d76b706/exercises/practice/zipper",
+      "source_commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+      "selection_pool": [
+        "zipper",
+        "satellite"
+      ],
+      "selection_rank": [
+        "zipper",
+        "satellite"
+      ],
+      "instructions_file": "INSTRUCTIONS.md",
+      "interface_file": "INTERFACE.md",
+      "fixture_files": {
+        "INSTRUCTIONS.md": "7205e1a8523ae8076fdbc15390718368e4d9ef2fb4a54dbf0afcae5477e63927",
+        "INTERFACE.md": "3c367abbaf80e63f6ff1cce96f090fe4001ded46a3ff06f29cfa35223d5a4b10",
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "zipper.py": "66276107d448f53a12509da6f503280e0dca4a6bbd9d690a774fb0972a55f926"
+      },
+      "fixture_sha256": "344f457fd8ed4a9f04f0a2a6dddee8eb5ac4781a72619c8f502d6e3674442559",
+      "evaluator_files": {
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "SOURCE.json": "a78d59044b64c6486f6a1c806cc5bc5bdc7fb5fb9c92fbe4196fa5f5bda0f3b5",
+        "reference/zipper.py": "c1eff987dcc104ad0721087a18b96735f5630d4eb3828532e09adf434f6a06df",
+        "zipper_test.py": "a3cf6e5ebcf6b2171bcc80fa0ce81b425af23b522f222e841fa2abd3119e95b2"
+      },
+      "grader_sha256": "88f39d94ccbfa96f834645f586d810f708a62e8965ac392be902f0005a294f83",
+      "task_prompt_sha256": "afa0f8b9c0ab544394df28519327073dc9a88d871d2152b4e6fc2d6734b4cd3b",
+      "grading": {
+        "argv": [
+          "python3",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          ".",
+          "-p",
+          "*_test.py",
+          "-v"
+        ],
+        "pattern": "*_test.py",
+        "total_tests": 14,
+        "timeout_seconds": 60,
+        "copy_files": [
+          "zipper_test.py"
+        ],
+        "reference_solution_map": {
+          "zipper.py": "reference/zipper.py"
+        },
+        "pass_rule": "exit_code == 0 AND expected test count AND no skipped tests",
+        "test_names": [
+          "test_data_is_retained",
+          "test_left_right_and_value",
+          "test_dead_end",
+          "test_tree_from_deep_focus",
+          "test_traversing_up_from_top",
+          "test_left_right_and_up",
+          "test_test_ability_to_descend_multiple_levels_and_return",
+          "test_set_value",
+          "test_set_value_after_traversing_up",
+          "test_set_left_with_leaf",
+          "test_set_right_with_null",
+          "test_set_right_with_subtree",
+          "test_set_value_on_deep_focus",
+          "test_different_paths_to_same_zipper"
+        ]
+      },
+      "public_checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "-B",
+            "-c",
+            "from pathlib import Path; compile(Path('zipper.py').read_text(), 'zipper.py', 'exec')"
+          ]
+        }
+      ],
+      "validation": {
+        "reference": {
+          "exit_code": 0,
+          "tests_run": 14,
+          "passed": true,
+          "failure_summary": null,
+          "output_sha256": "a60e75357a7eb003ed54b3311533d422d363bd757e789009d7124460ac1f8f29",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        },
+        "starter": {
+          "exit_code": 1,
+          "tests_run": 14,
+          "passed": false,
+          "failure_summary": "errors=14",
+          "output_sha256": "fa3fa0a735dea2332dc1f68b05c2d94f933f271d120c91e5ebe947b7fdda5006",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        }
+      },
+      "license": "MIT (preserve Exercism license notices)",
+      "limitations": [
+        "Public exercise and public tests may appear in model training data.",
+        "Withholding local tests is adapted evaluation, not the normal Exercism learning workflow.",
+        "This task evaluates bounded Python implementation, not general intelligence or visual quality."
+      ]
+    },
+    {
+      "id": "exercism-python-book-store",
+      "slug": "book-store",
+      "category": "optimization",
+      "upstream_difficulty": 7,
+      "fixture_dir": "benchmarks/fixtures/exercism-python/book-store",
+      "evaluator_dir": "benchmarks/evaluators/exercism-python/book-store",
+      "solution_files": [
+        "book_store.py"
+      ],
+      "source_url": "https://github.com/exercism/python/tree/6105f6d9d3ef66ce3d5c8f529d2882af3d76b706/exercises/practice/book-store",
+      "source_commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+      "selection_pool": [
+        "book-store",
+        "knapsack",
+        "two-bucket"
+      ],
+      "selection_rank": [
+        "book-store",
+        "knapsack",
+        "two-bucket"
+      ],
+      "instructions_file": "INSTRUCTIONS.md",
+      "interface_file": "INTERFACE.md",
+      "fixture_files": {
+        "INSTRUCTIONS.md": "68ad65cec74a0e440743b2f98b7bf75e58227ca72c742429292c72f4d3515ce3",
+        "INTERFACE.md": "b8f8895da58f4759d9bd1f2727834bf164a3dd033598db5abca02022521e7683",
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "book_store.py": "5c22fe209f90b16dbbacff457199d0b14152b48616c875085c8ff1f6f7188ec2"
+      },
+      "fixture_sha256": "f9860f525067abb21a33ff52e727d31bc24abdcb21bf2ff3cb28c8c12b40b475",
+      "evaluator_files": {
+        "LICENSE.exercism-python": "e52f804e74f0fbd34e8927962319df346166b8194094309a0aee318693df44df",
+        "SOURCE.json": "b9a96408eccbcf4c6270e4f6a7e64585b20544ac18bafee1076d875f83a85283",
+        "book_store_test.py": "59204f1edbb004c2402cea2aa7d1389c5293766fae4ce5d79a83627970c7acf3",
+        "reference/book_store.py": "728655581209a08f392aa2d6a5060bca855f53ea3e96f66a86db738dbf23d751"
+      },
+      "grader_sha256": "6f55412ef382720a112b893feb384caf36b5e87d35dfa16f2df77df72dabdfad",
+      "task_prompt_sha256": "38447060893febe3c5890c78555801c360f8deecc077cb75d4711398d2fda00a",
+      "grading": {
+        "argv": [
+          "python3",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          ".",
+          "-p",
+          "*_test.py",
+          "-v"
+        ],
+        "pattern": "*_test.py",
+        "total_tests": 20,
+        "timeout_seconds": 60,
+        "copy_files": [
+          "book_store_test.py"
+        ],
+        "reference_solution_map": {
+          "book_store.py": "reference/book_store.py"
+        },
+        "pass_rule": "exit_code == 0 AND expected test count AND no skipped tests",
+        "test_names": [
+          "test_only_a_single_book",
+          "test_two_of_the_same_book",
+          "test_empty_basket",
+          "test_two_different_books",
+          "test_three_different_books",
+          "test_four_different_books",
+          "test_five_different_books",
+          "test_two_groups_of_four_is_cheaper_than_group_of_five_plus_group_of_three",
+          "test_two_groups_of_four_is_cheaper_than_groups_of_five_and_three",
+          "test_group_of_four_plus_group_of_two_is_cheaper_than_two_groups_of_three",
+          "test_two_each_of_first_four_books_and_one_copy_each_of_rest",
+          "test_two_copies_of_each_book",
+          "test_three_copies_of_first_book_and_two_each_of_remaining",
+          "test_three_each_of_first_two_books_and_two_each_of_remaining_books",
+          "test_four_groups_of_four_are_cheaper_than_two_groups_each_of_five_and_three",
+          "test_check_that_groups_of_four_are_created_properly_even_when_there_are_more_groups_of_three_than_groups_of_five",
+          "test_one_group_of_one_and_four_is_cheaper_than_one_group_of_two_and_three",
+          "test_one_group_of_one_and_two_plus_three_groups_of_four_is_cheaper_than_one_group_of_each_size",
+          "test_two_groups_of_four_and_a_group_of_five",
+          "test_shuffled_book_order"
+        ]
+      },
+      "public_checks": [
+        {
+          "name": "syntax",
+          "argv": [
+            "python3",
+            "-B",
+            "-c",
+            "from pathlib import Path; compile(Path('book_store.py').read_text(), 'book_store.py', 'exec')"
+          ]
+        }
+      ],
+      "validation": {
+        "reference": {
+          "exit_code": 0,
+          "tests_run": 20,
+          "passed": true,
+          "failure_summary": null,
+          "output_sha256": "8ed32eb2c73fe8577cb3e31704d65f28dbf5c22ffbc3fef82e22f93ed1ce1ea0",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        },
+        "starter": {
+          "exit_code": 1,
+          "tests_run": 20,
+          "passed": false,
+          "failure_summary": "failures=20",
+          "output_sha256": "112ada1b15a9fa8a9767296c4fc4e8347fb337d6d1a17ff82aa6931b5051d0ae",
+          "sandbox": "codex-permissions-read-only-network-disabled",
+          "python": "3.14.7"
+        }
+      },
+      "license": "MIT (preserve Exercism license notices)",
+      "limitations": [
+        "Public exercise and public tests may appear in model training data.",
+        "Withholding local tests is adapted evaluation, not the normal Exercism learning workflow.",
+        "This task evaluates bounded Python implementation, not general intelligence or visual quality."
+      ]
+    }
+  ]
+}

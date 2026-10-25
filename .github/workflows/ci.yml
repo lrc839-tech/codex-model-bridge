@@ -33,6 +33,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Run offline tests
         run: python -m unittest discover -s tests -v
+      - name: Check benchmark accounting and isolated coordinator without model calls
+        run: |
+          python -m unittest discover -s benchmarks/runner/tests -v
+          python -m unittest benchmarks.test_api_broker -v
       - name: Check macOS launchers
         run: bash -n install.command configure.command uninstall.command scripts/mac_launcher.sh
       - name: Build portable Mac ZIP

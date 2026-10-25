@@ -168,9 +168,10 @@ def _http_error(status: int) -> ProviderError:
 class ProviderClient:
     """Three-field profile client. No automatic retries or paid fallbacks."""
 
-    def __init__(self, profile: Mapping[str, Any]):
+    def __init__(self, profile: Mapping[str, Any], *, ledger=None, stage="unspecified", request_guard=None):
         if not isinstance(profile, Mapping):
             raise ProviderError("模型配置格式不正确。", code="invalid_profile")
+        self.ledger, self.stage, self.request_guard = ledger, stage, request_guard
         self.base_url = normalize_base_url(profile.get("base_url", ""))
         key, model = profile.get("api_key"), profile.get("model")
         if not isinstance(key, str) or not key.strip():
@@ -189,8 +190,7 @@ class ProviderClient:
     def __repr__(self) -> str:
         return "ProviderClient(provider=" + repr(self.provider) + ", model=" + repr(self.model) + ")"
 
-    def _request(self, suffix: str, payload: dict[str, Any] | None,
-                 timeout: float) -> dict[str, Any]:
+    def _prepare_request(self, suffix, payload, timeout):
         if (isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or
                 not math.isfinite(timeout) or not 0 < timeout <= 3600):
             raise ProviderError("请求超时必须在 0 到 3600 秒之间。", code="invalid_timeout")
@@ -199,12 +199,16 @@ class ProviderClient:
                 payload, ensure_ascii=False, allow_nan=False).encode("utf-8")
         except (TypeError, ValueError, UnicodeError):
             raise ProviderError("API 请求包含不能序列化的内容。", code="invalid_request") from None
-        req = request.Request(
+        return request.Request(
             self.base_url + suffix, data=body,
             headers={"Authorization": "Bearer " + self._api_key,
                      "Accept": "application/json", "Content-Type": "application/json",
                      "User-Agent": "codex-model-bridge/0.1"},
             method="GET" if body is None else "POST")
+
+    def _http_request(self, suffix: str, payload: dict[str, Any] | None,
+                      timeout: float, *, prepared=None) -> dict[str, Any]:
+        req = prepared if prepared is not None else self._prepare_request(suffix, payload, timeout)
         try:
             with self._opener.open(req, timeout=timeout) as response:
                 raw = response.read(MAX_RESPONSE_BYTES + 1)
@@ -235,9 +239,34 @@ class ProviderClient:
         except (ValueError, UnicodeError):
             raise ProviderError("API 未返回合法 JSON，请确认填写的是 API 链接。",
                                 code="invalid_response") from None
-        if not isinstance(result, dict) or "error" in result:
+        if not isinstance(result, dict):
             raise ProviderError("API 返回异常响应，请检查供应商的模型权限与请求配置。",
                                 code="invalid_response")
+        return result
+
+    def _request(self, suffix, payload, timeout):
+        measured = payload is not None and suffix == "/chat/completions"
+        # Local validation must finish before recording an actual submitted call.
+        prepared = self._prepare_request(suffix, payload, timeout)
+        if measured and self.request_guard is not None:
+            self.request_guard()
+        request_id = self.ledger.start(self.provider, self.model, self.stage) if measured and self.ledger else None
+        try:
+            result = self._http_request(suffix, payload, timeout, prepared=prepared)
+        except Exception as error:
+            if request_id:
+                self.ledger.finish(request_id, "error", None, error_code=getattr(error, "code", "request_failed"))
+            raise
+        if request_id:
+            choices = result.get("choices")
+            finish = choices[0].get("finish_reason") if isinstance(choices, list) and choices and isinstance(choices[0], dict) else None
+            if finish not in {"stop", "length", "tool_calls", "content_filter", "function_call", "insufficient_system_resource"}:
+                finish = "other" if finish is not None else None
+            failed = "error" in result
+            self.ledger.finish(request_id, "error" if failed else "ok", result.get("usage"),
+                               finish_reason=finish, error_code="upstream_api_error" if failed else None)
+        if "error" in result:
+            raise ProviderError("API 返回异常响应，请检查供应商的模型权限与请求配置。", code="invalid_response")
         return result
 
     def fetch_models(self, timeout: float = 15) -> list[str]:

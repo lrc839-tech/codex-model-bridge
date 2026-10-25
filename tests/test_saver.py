@@ -49,7 +49,7 @@ class SaverScenarios(unittest.TestCase):
 
     def args(self, max_repairs=2):
         self.task_path.write_text(json.dumps(self.task))
-        return argparse.Namespace(mixed=True, mode="saver", task_file=str(self.task_path),
+        return argparse.Namespace(mixed=True, task_file=str(self.task_path),
                                   dry_run=False, model="deepseek-flash", review_model="deepseek-flash",
                                   max_repairs=max_repairs, timeout=300)
 

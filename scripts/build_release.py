@@ -11,7 +11,7 @@ import stat
 import sys
 import zipfile
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 PACKAGE_NAME = "codex-model-bridge"
 ROOT = Path(__file__).resolve().parent.parent
 ROOT_FILES = {

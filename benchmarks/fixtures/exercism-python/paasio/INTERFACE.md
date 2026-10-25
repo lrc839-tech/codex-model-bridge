@@ -1,0 +1,3 @@
+# Public interface clarification
+
+Implement MeteredFile using subclassing and MeteredSocket using delegation, preserving the starter's method/property names and signatures. Counts start at zero. Count actual bytes transferred, not requested bytes, and count each read/write or recv/send operation, including zero-byte and partial transfers. Preserve wrapped context-manager behavior, exception propagation/suppression, flags, and file iteration/next behavior. The file wrapper's read/write byte and operation counters, and socket wrapper's recv/send counters, remain observable after operations. This is a wrapper task; no real network connection is needed.

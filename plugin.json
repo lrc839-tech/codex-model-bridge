@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "codex-model-bridge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Codex 负责规划与最终决定，按需调用兼容 Chat Completions 的模型执行和初审。",
   "author": {"name": "lrc839-tech"},
   "homepage": "https://github.com/lrc839-tech/codex-model-bridge",

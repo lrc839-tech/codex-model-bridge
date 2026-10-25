@@ -1,0 +1,3 @@
+# Public interface clarification
+
+Implement Zipper.from_tree(tree), value(), left(), right(), up(), set_value(value), set_left(tree), set_right(tree), and to_tree(). Trees are nested dictionaries with a 'value' and optional 'left'/'right' subtrees. from_tree focuses the root. Navigation returns a zipper with retained context, or None when impossible. Setters return a zipper focused at the current node with the requested change. to_tree returns the complete tree from the root, including changes below the root. Use supplied values/subtrees as data; the starter's setter stubs omit arguments and may be corrected.

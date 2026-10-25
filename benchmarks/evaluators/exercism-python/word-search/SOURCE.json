@@ -1,0 +1,11 @@
+{
+  "commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+  "files": {
+    ".docs/instructions.md": "ec749d7e2303930a7c00de1885b426947ce2ef1289c5e753646a749cf2f4a26b",
+    ".meta/example.py": "ddef232826786a83e26b1fb1a46e530a533f24946e02ec629caf4ddb003bc71d",
+    "word_search.py": "2c57e6458344b273ffc7e9e4d07726cc1c09c3ab215dab92a60f40b4b8947a7b",
+    "word_search_test.py": "fc834a9dc0c75eb4444f7ed1451d8ec0881fa062a3a60374337480892a5a7606"
+  },
+  "repository": "exercism/python",
+  "source_dir": "exercises/practice/word-search/"
+}

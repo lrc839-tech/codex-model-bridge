@@ -1,0 +1,12 @@
+{
+  "commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+  "files": {
+    ".docs/instructions.append.md": "7c9b43f19518163b640b2d2f1d050cc86e03edba7f5974b2f942a23d75056d26",
+    ".docs/instructions.md": "ad0c5ba4f4feaf16a2b0224b6da0f521fcfc683c30b57d2d061feab02a936535",
+    ".meta/example.py": "e75d1fb46070b291a9404f36be076944e5c8e2f20582cf3dd6e9195bde1be7e4",
+    "bank_account.py": "ed205e497b0fd700bababdba5d0b2522e67f03d7c166e3ae1d1d9da4dd76d60e",
+    "bank_account_test.py": "d4bfe068ce35af331541c5420eefb6e08bb0c1bf3920a2043bc3a4b763f1c380"
+  },
+  "repository": "exercism/python",
+  "source_dir": "exercises/practice/bank-account/"
+}

@@ -7,15 +7,18 @@ from __future__ import annotations
 
 import argparse
 import copy
+import io
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
 from unittest import mock
 
 from runtime import engine
-from runtime.providers import ProviderError
+from runtime.providers import ProviderClient, ProviderError
 
 
 FAKE_KEY = "offline-engine-test-key"
@@ -58,7 +61,7 @@ class EngineFixture(unittest.TestCase):
         self.addCleanup(self.state_patch.stop)
 
     def args(self, **overrides):
-        values = {"mixed": True, "mode": "strict", "task_file": str(self.task_file),
+        values = {"mixed": True, "task_file": str(self.task_file),
                   "dry_run": False, "model": "fixture-model", "review_model": "fixture-reviewer",
                   "timeout": 60, "max_repairs": 0}
         values.update(overrides)
@@ -83,13 +86,24 @@ class EngineFixture(unittest.TestCase):
                                                   FAKE_KEY, "bounded task", 30)
         return result, captures
 
-    def successful_strict_run(self):
+    def successful_run(self, worker=None):
         def execute(stage, *unused):
             (stage / "editable.txt").write_text("approved revision\n", encoding="utf-8")
             return {"exit_code": 0, "stop_reason": None, "usage": []}
+        self.passing_checks = [{"name": "fixture", "exit_code": 0, "stop_reason": None}]
+        approved = {"review": {"verdict": "pass", "summary": "Offline evidence checked.",
+                               "findings": [], "unverified": []}, "usage": {}}
         with mock.patch.object(engine, "secret", return_value=FAKE_KEY), \
-             mock.patch.object(engine, "execute_saver_worker", side_effect=execute):
-            return engine.run_task(self.args())
+             mock.patch.object(engine, "execute_saver_worker", side_effect=worker or execute), \
+             mock.patch.object(engine, "run_fixed_checks", return_value=self.passing_checks), \
+             mock.patch.object(engine, "independent_review", return_value=approved):
+            result = engine.run_task(self.args())
+        report = json.loads((Path(result['run_dir']) / 'desktop-review.template.json').read_text())
+        report['decision'] = 'accept'
+        for row in report['criteria']:
+            row.update(status='pass', evidence=['Offline fixture evidence: changes.diff and fixed checks.'])
+        engine.save_json(Path(result['run_dir']) / 'desktop-review.json', report)
+        return result
 
 
 class ExplicitSelectionTests(EngineFixture):
@@ -103,17 +117,26 @@ class ExplicitSelectionTests(EngineFixture):
         provider.assert_not_called()
         self.assertFalse((engine.STATE / "runs").exists())
 
-    def test_dry_run_does_not_load_profile_or_construct_provider_in_either_mode(self):
+    def test_dry_run_does_not_load_profile_or_construct_provider(self):
+        with mock.patch.object(engine.config, "load_profile", side_effect=AssertionError("profile read")) as profile, \
+             mock.patch.object(engine, "ProviderClient") as provider:
+            result = engine.run_task(self.args(dry_run=True))
+            self.assertEqual("dry_run", result["status"])
+            self.assertIs(False, result["provider_called"])
+            self.assertEqual("original\n", (self.project / "editable.txt").read_text())
+            profile.assert_not_called()
+            provider.assert_not_called()
+
+    def test_removed_mode_selector_is_rejected_before_task_or_provider(self):
+        entry = Path(__file__).resolve().parents[1] / "skills/codex-model-bridge/scripts/bridge.py"
         for mode in ["strict", "saver"]:
-            with self.subTest(mode=mode), \
-                 mock.patch.object(engine.config, "load_profile", side_effect=AssertionError("profile read")) as profile, \
-                 mock.patch.object(engine, "ProviderClient") as provider:
-                result = engine.run_task(self.args(mode=mode, dry_run=True))
-                self.assertEqual("dry_run", result["status"])
-                self.assertIs(False, result["provider_called"])
-                self.assertEqual("original\n", (self.project / "editable.txt").read_text())
-                profile.assert_not_called()
-                provider.assert_not_called()
+            with self.subTest(mode=mode):
+                result = subprocess.run([sys.executable, str(entry), "run", "--mixed", "--mode", mode,
+                                         "--task-file", "/does/not/exist/task.json"],
+                                        capture_output=True, text=True, timeout=10)
+                self.assertEqual(2, result.returncode)
+                self.assertIn("unrecognized arguments: --mode " + mode, result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
 
 
 class ToolBoundaryTests(EngineFixture):
@@ -288,6 +311,173 @@ class ReviewBoundaryTests(EngineFixture):
 
 
 class EscalationAndIntegrationTests(EngineFixture):
+    def test_retry_cannot_reuse_old_review_after_worker_or_check_failure(self):
+        change_review = {'review': {'verdict': 'changes_requested', 'summary': 'Check the stated boundary.',
+                                   'findings': [{'file': 'editable.txt', 'line': 1, 'problem': 'A concrete concern.'}],
+                                   'unverified': []}, 'usage': {}}
+        for failure in ('worker_exit', 'worker_exception', 'check_timeout', 'scope_change'):
+            with self.subTest(failure=failure):
+                calls = []
+
+                def execute(stage, *unused):
+                    calls.append(1)
+                    if len(calls) == 2:
+                        if failure == 'worker_exit':
+                            return {'exit_code': 1, 'stop_reason': 'timeout', 'usage': []}
+                        if failure == 'worker_exception':
+                            raise ProviderError('Offline request failure.')
+                        if failure == 'scope_change':
+                            (stage / 'outside.txt').write_text('unapproved output')
+                    (stage / 'editable.txt').write_text('candidate from first attempt\n')
+                    return {'exit_code': 0, 'stop_reason': None, 'usage': []}
+
+                passing = [{'name': 'fixture', 'exit_code': 0, 'stop_reason': None}]
+                checks = [passing, [{'name': 'fixture', 'exit_code': None, 'stop_reason': 'timeout'}]] if failure == 'check_timeout' else [passing]
+                with mock.patch.object(engine, 'secret', return_value=FAKE_KEY), \
+                     mock.patch.object(engine, 'execute_saver_worker', side_effect=execute), \
+                     mock.patch.object(engine, 'run_fixed_checks', side_effect=checks), \
+                     mock.patch.object(engine, 'independent_review', return_value=change_review):
+                    result = engine.run_task(self.args(max_repairs=1))
+                self.assertEqual('needs_codex_attention', result['status'])
+                self.assertFalse(result['checks_passed'])
+                self.assertNotIn('checked_stage_hashes', result)
+                self.assertNotIn('review', result)
+                run = Path(result['run_dir'])
+                report = json.loads((run / 'desktop-review.template.json').read_text())
+                report['decision'] = 'accept'
+                for row in report['criteria']:
+                    row.update(status='pass', evidence=['A later desktop observation.'])
+                engine.save_json(run / 'desktop-review.json', report)
+                with self.assertRaises(ValueError):
+                    engine.apply_run(argparse.Namespace(run_dir=str(run), desktop_reviewed=True))
+                self.assertEqual('original\n', (self.project / 'editable.txt').read_text())
+
+    def test_changes_requested_can_be_adjudicated_with_new_desktop_evidence(self):
+        def execute(stage, *unused):
+            (stage / 'editable.txt').write_text('approved revision\n')
+            return {'exit_code': 0, 'stop_reason': None, 'usage': []}
+        passing = [{'name': 'fixture', 'exit_code': 0, 'stop_reason': None}]
+        review = {'review': {'verdict': 'changes_requested', 'summary': 'Boundary needs checking.',
+                            'findings': [{'file': 'editable.txt', 'line': 1, 'problem': 'Check this boundary.'}],
+                            'unverified': []}, 'usage': {}}
+        with mock.patch.object(engine, 'secret', return_value=FAKE_KEY), \
+             mock.patch.object(engine, 'execute_saver_worker', side_effect=execute), \
+             mock.patch.object(engine, 'run_fixed_checks', return_value=passing), \
+             mock.patch.object(engine, 'independent_review', return_value=review):
+            result = engine.run_task(self.args())
+        run = Path(result['run_dir'])
+        report = json.loads((run / 'desktop-review.template.json').read_text())
+        report['decision'] = 'accept'
+        for row in report['criteria']:
+            row.update(status='pass', evidence=['Observed the actual checked revision and boundary behavior.'])
+        report['external_review_resolution']['reason'] = 'A new desktop boundary observation resolves the concern.'
+        for row in report['external_review_resolution']['items']:
+            row.update(status='resolved', evidence=['Specific boundary check against editable.txt:1 passed.'])
+        engine.save_json(run / 'desktop-review.json', report)
+        with mock.patch.object(engine, 'run_fixed_checks', return_value=passing):
+            applied = engine.apply_run(argparse.Namespace(run_dir=str(run), desktop_reviewed=True))
+        self.assertEqual('integrated_pending_desktop_acceptance', applied['status'])
+        self.assertEqual('approved revision\n', (self.project / 'editable.txt').read_text())
+
+    def test_unverified_or_failed_desktop_visual_evidence_cannot_be_overridden(self):
+        self.task['desktop_acceptance'] = ['Actual visual observation required.']
+        self.task_file.write_text(json.dumps(self.task))
+        result = self.successful_run()
+        run = Path(result['run_dir'])
+        report = json.loads((run / 'desktop-review.json').read_text())
+        for status in ('unverified', 'fail'):
+            with self.subTest(status=status):
+                report['criteria'][-1]['status'] = status
+                engine.save_json(run / 'desktop-review.json', report)
+                with self.assertRaises(ValueError):
+                    engine.apply_run(argparse.Namespace(run_dir=str(run), desktop_reviewed=True))
+        self.assertEqual('original\n', (self.project / 'editable.txt').read_text())
+
+    def test_summary_review_pass_flag_must_match_current_review(self):
+        result = self.successful_run()
+        result['review'] = {'verdict': 'blocked', 'summary': 'New evidence required.',
+                            'findings': [], 'unverified': ['Actual boundary not observed.']}
+        engine.save_json(Path(result['run_dir']) / 'summary.json', result)
+        with self.assertRaisesRegex(ValueError, '初审结论与通过标记不一致'):
+            engine.apply_run(argparse.Namespace(run_dir=result['run_dir'], desktop_reviewed=True))
+        self.assertEqual('original\n', (self.project / 'editable.txt').read_text())
+
+    def blocked_run(self):
+        def execute(stage,*unused):
+            (stage/'editable.txt').write_text('approved revision\n')
+            return {'exit_code':0,'stop_reason':None,'usage':[]}
+        self.passing_checks=[{'name':'fixture','exit_code':0,'stop_reason':None}]
+        review={'review':{'verdict':'blocked','summary':'Needs Codex evidence.',
+                          'findings':[],'unverified':['Observe the final result.']},'usage':{}}
+        with mock.patch.object(engine,'secret',return_value=FAKE_KEY), \
+             mock.patch.object(engine,'execute_saver_worker',side_effect=execute), \
+             mock.patch.object(engine,'run_fixed_checks',return_value=self.passing_checks), \
+             mock.patch.object(engine,'independent_review',return_value=review):
+            return engine.run_task(self.args())
+
+    def test_blocked_review_needs_explicit_resolutions_and_evidence(self):
+        result=self.blocked_run()
+        run=Path(result['run_dir'])
+        report=json.loads((run/'desktop-review.template.json').read_text())
+        report['decision']='accept'
+        for row in report['criteria']:
+            row.update(status='pass',evidence=['Actually inspected checked artifact and fixed checks.'])
+        engine.save_json(run/'desktop-review.json',report)
+        with self.assertRaises(ValueError):
+            engine.apply_run(argparse.Namespace(run_dir=str(run),desktop_reviewed=True))
+        self.assertEqual('original\n',(self.project/'editable.txt').read_text())
+        report['external_review_resolution']['reason']='Codex obtained the missing observation.'
+        for row in report['external_review_resolution']['items']:
+            row.update(status='resolved',evidence=['Observed editable.txt equals expected approved revision.'])
+        engine.save_json(run/'desktop-review.json',report)
+        with mock.patch.object(engine,'run_fixed_checks',return_value=self.passing_checks):
+            applied=engine.apply_run(argparse.Namespace(run_dir=str(run),desktop_reviewed=True))
+        self.assertEqual('integrated_pending_desktop_acceptance',applied['status'])
+        self.assertEqual('approved revision\n',(self.project/'editable.txt').read_text())
+
+    def test_resolved_report_cannot_override_failed_checks(self):
+        result=self.blocked_run();run=Path(result['run_dir'])
+        result['checks_passed']=False
+        engine.save_json(run/'summary.json',result)
+        with self.assertRaises(ValueError):
+            engine.apply_run(argparse.Namespace(run_dir=str(run),desktop_reviewed=True))
+        self.assertEqual('original\n',(self.project/'editable.txt').read_text())
+
+    def test_desktop_only_visual_criteria_cannot_be_omitted_at_apply(self):
+        self.task['desktop_acceptance']=['Actual rendered appearance verified by Codex.']
+        self.task_file.write_text(json.dumps(self.task))
+        result=self.successful_run();run=Path(result['run_dir'])
+        report=json.loads((run/'desktop-review.json').read_text());report['criteria'].pop()
+        engine.save_json(run/'desktop-review.json',report)
+        with self.assertRaises(ValueError):
+            engine.apply_run(argparse.Namespace(run_dir=str(run),desktop_reviewed=True))
+    def test_completed_request_usage_survives_later_worker_network_failure(self):
+        def client(profile, **kwargs):
+            created = ProviderClient(profile, **kwargs)
+            created._opener = mock.Mock()
+            first = response({"role": "assistant", "content": None, "tool_calls": [call()]}, "tool_calls")
+            created._opener.open.side_effect = [io.BytesIO(json.dumps(first).encode()), OSError("offline transport failure")]
+            return created
+        with mock.patch.object(engine.config, "load_profile", return_value=PROFILE), \
+             mock.patch.object(engine, "ProviderClient", side_effect=client):
+            result = engine.run_task(self.args())
+        self.assertEqual("needs_codex_attention", result["status"])
+        summary = result["external_usage"]
+        self.assertEqual((2, 2, 1), tuple(summary[key] for key in ("requests_started", "requests_finished", "requests_failed")))
+        self.assertEqual(5, summary["known_totals"]["total_tokens"])
+        self.assertFalse(summary["usage_complete"])
+        self.assertIsNone(summary["total_tokens"])
+
+    def test_old_mode_record_cannot_bypass_desktop_review_gate(self):
+        result = self.successful_run()
+        summary_path = Path(result["run_dir"]) / "summary.json"
+        result["mode"] = "strict"
+        engine.save_json(summary_path, result)
+        (Path(result["run_dir"]) / "desktop-review.json").unlink()
+        with self.assertRaisesRegex(ValueError, "当前仅支持省额流程"):
+            engine.apply_run(argparse.Namespace(run_dir=result["run_dir"], desktop_reviewed=True))
+        self.assertEqual("original\n", (self.project / "editable.txt").read_text())
+
     def test_real_provider_exception_becomes_redacted_codex_handoff(self):
         client = mock.Mock()
         client.chat.side_effect = ProviderError("Offline failure " + FAKE_KEY)
@@ -320,7 +510,26 @@ class EscalationAndIntegrationTests(EngineFixture):
         with self.assertRaises(ValueError):
             engine.apply_run(argparse.Namespace(run_dir="/does/not/exist", desktop_reviewed=False))
 
-    def test_strict_apply_refuses_changed_original_without_partial_write(self):
+    def test_boolean_review_flag_cannot_replace_per_criterion_evidence(self):
+        result = self.successful_run()
+        report_path = Path(result['run_dir']) / 'desktop-review.json'
+        report = json.loads(report_path.read_text())
+        report['criteria'][0]['status'] = 'unverified'
+        engine.save_json(report_path, report)
+        with self.assertRaises(ValueError):
+            engine.apply_run(argparse.Namespace(run_dir=result['run_dir'], desktop_reviewed=True))
+        self.assertEqual('original\n', (self.project / 'editable.txt').read_text())
+
+    def test_review_evidence_must_bind_contract_and_stage(self):
+        result = self.successful_run()
+        report_path = Path(result['run_dir']) / 'desktop-review.json'
+        report = json.loads(report_path.read_text())
+        report['contract_sha256'] = 'another-contract'
+        engine.save_json(report_path, report)
+        with self.assertRaises(ValueError):
+            engine.apply_run(argparse.Namespace(run_dir=result['run_dir'], desktop_reviewed=True))
+
+    def test_saver_apply_refuses_changed_original_without_partial_write(self):
         self.task["writable_files"].append("z-second.txt")
         (self.project / "z-second.txt").write_text("second original\n")
         self.task_file.write_text(json.dumps(self.task))
@@ -330,26 +539,26 @@ class EscalationAndIntegrationTests(EngineFixture):
             (stage / "z-second.txt").write_text("approved second revision\n")
             return {"exit_code": 0, "stop_reason": None, "usage": []}
 
-        with mock.patch.object(engine, "secret", return_value=FAKE_KEY), \
-             mock.patch.object(engine, "execute_saver_worker", side_effect=change_both):
-            result = engine.run_task(self.args())
+        result = self.successful_run(worker=change_both)
         (self.project / "z-second.txt").write_text("concurrent change\n")
         with self.assertRaises(ValueError):
             engine.apply_run(argparse.Namespace(run_dir=result["run_dir"], desktop_reviewed=True))
         self.assertEqual("original\n", (self.project / "editable.txt").read_text())
         self.assertEqual("concurrent change\n", (self.project / "z-second.txt").read_text())
 
-    def test_strict_apply_refuses_mutated_execution_copy(self):
-        result = self.successful_strict_run()
+    def test_saver_apply_refuses_mutated_execution_copy(self):
+        result = self.successful_run()
         (Path(result["run_dir"]) / "workspace/editable.txt").write_text("unreviewed later change\n")
         with self.assertRaises(ValueError):
             engine.apply_run(argparse.Namespace(run_dir=result["run_dir"], desktop_reviewed=True))
         self.assertEqual("original\n", (self.project / "editable.txt").read_text())
 
-    def test_strict_success_integrates_and_keeps_original_backup(self):
-        result = self.successful_strict_run()
-        applied = engine.apply_run(argparse.Namespace(run_dir=result["run_dir"], desktop_reviewed=True))
+    def test_saver_success_integrates_and_keeps_original_backup(self):
+        result = self.successful_run()
+        with mock.patch.object(engine, "run_fixed_checks", return_value=self.passing_checks):
+            applied = engine.apply_run(argparse.Namespace(run_dir=result["run_dir"], desktop_reviewed=True))
         self.assertEqual("integrated_pending_desktop_acceptance", applied["status"])
+        self.assertTrue(applied["integration_checks_passed"])
         self.assertEqual("approved revision\n", (self.project / "editable.txt").read_text())
         self.assertEqual("original\n", (Path(applied["backup"]) / "editable.txt").read_text())
 

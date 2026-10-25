@@ -79,7 +79,7 @@
             <li><strong>测试执行能力</strong>确认对话连接和工具调用都通过。模型能聊天，不一定能执行任务。</li>
             <li><strong>回到桌面 Codex</strong>在聊天里按需调用技能：<code class="command">$codex-model-bridge 帮我完成这个任务</code></li>
           </ol>
-          <div class="mode-note"><strong>普通任务仍默认纯 Codex。</strong><br>配置模型不会自动切换工作流。只有明确调用技能时，才把执行交给外部模型。</div>
+          <div class="mode-note"><strong>普通任务仍默认纯 Codex。</strong><br>混合工作流只有省额档。引用技能后，Codex 仍会判断是否需要委派；简单问答直接回答，不调用外部模型。</div>
         </section>
         <details class="help">
           <summary>模型填什么？</summary>
@@ -88,7 +88,7 @@
         </details>
         <details class="help">
           <summary>支持其他服务吗？</summary>
-          <p>支持兼容 <code>/chat/completions</code> 且支持工具调用的文本模型。修改地址后需要重新输入 Key，再测试实际兼容性。</p>
+          <p>支持兼容 <code>/chat/completions</code> 且支持工具调用和 JSON 输出的文本模型。当前不会向外部模型发送图片，涉及画面时由 Codex 解释必要的文字上下文并完成视觉验收。修改地址后需要重新输入 Key，再测试实际兼容性。</p>
         </details>
       </aside>
     </div>

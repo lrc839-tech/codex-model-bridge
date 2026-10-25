@@ -1,0 +1,12 @@
+{
+  "commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+  "files": {
+    ".docs/instructions.md": "4f389a21f0b352607babb959e45bb449ab5d9b9970d1e3aaf5c2423b2ffc0c33",
+    ".meta/example.py": "592790e76ac7e4905cd12fbad3449ad5e4a9257c191f994f5155430892544159",
+    "paasio.py": "9a6238e652c6289fee1211c8a530563c091b7d386dbe5347a999b28d2a7211e8",
+    "paasio_test.py": "4c9aa14b0fdfea01221d5bdff32b9a5569bbfaf412e0985d82502776c41eb569",
+    "test_utils.py": "9c890fda159fa05e00ee30903d9beb226e0e76eb583d505cd46783bc63546194"
+  },
+  "repository": "exercism/python",
+  "source_dir": "exercises/practice/paasio/"
+}

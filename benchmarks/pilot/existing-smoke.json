@@ -1,0 +1,27 @@
+{
+  "purpose": "历史演示的真实计量，不是对照实验结果",
+  "observed_at": "2026-10-25",
+  "arm": "codex_ds_bridge",
+  "task": "normalize_name 单函数类型与空白修复",
+  "external_model": "deepseek-flash",
+  "recorded_external_usage_requests": 6,
+  "ds_input_tokens": 6453,
+  "ds_cached_input_tokens": 3840,
+  "ds_output_tokens": 398,
+  "ds_total_tokens": 6851,
+  "execution_review_seconds": 5.53,
+  "public_tests_passed": 8,
+  "hidden_tests_passed": null,
+  "codex_input_tokens": null,
+  "codex_output_tokens": null,
+  "codex_savings_vs_baseline": null,
+  "pure_codex_baseline_run": false,
+  "dsh_baseline_run": false,
+  "whole_desktop_planning_and_final_review_measured": false,
+  "notes": [
+    "cached 是 input 子项，不能额外加一次。",
+    "仅记录外部执行与初审，不含桌面Codex规划和最终决定。",
+    "API连接测试的2个请求不属于此任务6个请求，不在任务用量内。",
+    "已发布版本失败路径可能漏usage，正式比较前需补齐请求级计量。"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+  "files": {
+    ".docs/instructions.append.md": "5bba17d539d0704745375f9967ebaa439667974944ce49d221f09d640e19c997",
+    ".docs/instructions.md": "93ae936049168d8532e283a8610f45a06c6d9225e5812a2ece5c2c164d2870d0",
+    ".meta/example.py": "2382065cc01d03b7348eb42cfd7db9899565eccd85fcc6cf8199eb2627b5a226",
+    "sgf_parsing.py": "e821e6d68abd9336a222d56049ed9fb89c001b6d8ac62e2d10da44a36f76de9d",
+    "sgf_parsing_test.py": "d4207e6db303767a3cc407c048a8fb3d5271a48c9cafb396442a9a873f076e0d"
+  },
+  "repository": "exercism/python",
+  "source_dir": "exercises/practice/sgf-parsing/"
+}

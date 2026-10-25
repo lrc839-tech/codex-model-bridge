@@ -5,6 +5,8 @@ from __future__ import annotations
 import io
 import json
 import socket
+from pathlib import Path
+import tempfile
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -13,6 +15,7 @@ from urllib.error import HTTPError, URLError
 from runtime import providers
 from runtime.providers import (ProviderClient, ProviderError, execution_parameters,
                                normalize_base_url, provider_name)
+from runtime.telemetry import UsageLedger
 
 
 FAKE_KEY = "unit-test-key-not-a-real-secret"
@@ -262,6 +265,59 @@ class RequestTests(unittest.TestCase):
             self.assertEqual(cm.exception.code, "response_too_large")
         finally:
             providers.MAX_RESPONSE_BYTES = original
+
+
+class ProviderLedgerTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="provider-ledger-tests-")
+        self.addCleanup(self.temp.cleanup)
+        self.ledger = UsageLedger(Path(self.temp.name) / "requests.jsonl")
+
+    def client(self, result=None, exc=None, guard=None):
+        client = ProviderClient(PROFILE, ledger=self.ledger, stage="fixture", request_guard=guard)
+        client._opener = FakeOpener(result, exc)
+        return client
+
+    def test_local_validation_does_not_record_or_submit_a_request(self):
+        client = self.client(completion())
+        for kwargs in [{"timeout": 0}, {"messages": [{"content": object()}]}]:
+            arguments = {"messages": [{"role": "user", "content": "hi"}], **kwargs}
+            with self.subTest(kwargs=kwargs), self.assertRaises(ProviderError):
+                client.chat(**arguments)
+        self.assertEqual(0, self.ledger.summary()["requests_started"])
+        self.assertEqual([], client._opener.calls)
+
+    def test_guard_rejection_precedes_ledger_and_network(self):
+        def reject():
+            raise ValueError("fixture budget stop")
+        client = self.client(completion(), guard=reject)
+        with self.assertRaises(ValueError):
+            client.chat([{"role": "user", "content": "hi"}])
+        self.assertEqual(0, self.ledger.summary()["requests_started"])
+        self.assertEqual([], client._opener.calls)
+
+    def test_http_failure_is_one_unknown_call_without_retry(self):
+        client = self.client(exc=HTTPError("https://offline.invalid", 500, "private", {}, io.BytesIO()))
+        with self.assertRaises(ProviderError):
+            client.chat([{"role": "user", "content": "hi"}])
+        summary = self.ledger.summary()
+        self.assertEqual((1, 1, 1), tuple(summary[key] for key in ("requests_started", "requests_finished", "requests_failed")))
+        self.assertIsNone(summary["total_tokens"])
+        self.assertEqual(1, len(client._opener.calls))
+
+    def test_malformed_chat_keeps_usage_already_returned_by_provider(self):
+        client = self.client({"choices": [], "usage": completion()["usage"]})
+        with self.assertRaises(ProviderError):
+            client.chat([{"role": "user", "content": "hi"}])
+        self.assertEqual(10, self.ledger.summary()["total_tokens"])
+
+    def test_api_error_object_preserves_numeric_usage_as_failed_request(self):
+        client = self.client({"error": {"message": FAKE_KEY}, "usage": completion()["usage"]})
+        with self.assertRaises(ProviderError):
+            client.chat([{"role": "user", "content": "hi"}])
+        self.assertEqual(10, self.ledger.summary()["total_tokens"])
+        self.assertEqual(1, self.ledger.summary()["requests_failed"])
+        self.assertNotIn(FAKE_KEY, self.ledger.path.read_text())
 
 
 class LocalHTTPTests(unittest.TestCase):

@@ -5,7 +5,12 @@
   "input_files": ["test_normalize.py"],
   "writable_files": ["normalize.py"],
   "verification_files": ["test_normalize.py"],
-  "acceptance": ["保持字符串中间的空格", "None 和数字返回空字符串"],
+  "acceptance": [
+    "A1: 字符串首尾空白被去除，内部空白保持原样；证据为 test_spaces、test_internal、test_blank",
+    "A2: 空字符串和中文字符串行为正确；证据为 test_empty、test_unicode",
+    "A3: None、数字及对象等非字符串均返回空字符串；证据为 test_none、test_number、test_object",
+    "A4: 不修改固定验收文件；证据为控制器的文件范围与哈希检查"
+  ],
   "acceptance_checks": [{
     "name": "normalize 的固定行为检查",
     "argv": ["python3", "-m", "unittest", "test_normalize.py"],

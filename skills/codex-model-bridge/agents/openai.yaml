@@ -1,6 +1,6 @@
 interface:
   display_name: "Codex Model Bridge"
   short_description: "Codex 规划，按需调用国产或兼容模型执行与初检"
-  default_prompt: "使用 $codex-model-bridge，让当前桌面 Codex 规划和最终决定，本次明确选择混合省额模式；只把边界清楚的子任务交给我配置的模型执行与初检。"
+  default_prompt: "使用 $codex-model-bridge，让当前桌面 Codex 规划和最终决定；仅在任务适合委派时使用唯一的混合省额工作流，把边界清楚的文件子任务交给我配置的模型执行与初检，简单问答直接由 Codex 回答。"
 policy:
   allow_implicit_invocation: false

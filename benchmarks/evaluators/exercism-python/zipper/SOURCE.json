@@ -1,0 +1,11 @@
+{
+  "commit": "6105f6d9d3ef66ce3d5c8f529d2882af3d76b706",
+  "files": {
+    ".docs/instructions.md": "30c3fa8f9de3afdd691f3ff72e0407581da6676426ad7f175ef1553504df6066",
+    ".meta/example.py": "c1eff987dcc104ad0721087a18b96735f5630d4eb3828532e09adf434f6a06df",
+    "zipper.py": "66276107d448f53a12509da6f503280e0dca4a6bbd9d690a774fb0972a55f926",
+    "zipper_test.py": "a3cf6e5ebcf6b2171bcc80fa0ce81b425af23b522f222e841fa2abd3119e95b2"
+  },
+  "repository": "exercism/python",
+  "source_dir": "exercises/practice/zipper/"
+}
