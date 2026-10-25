@@ -1,0 +1,62 @@
+name: Release Mac ZIP
+
+on:
+  push:
+    tags: ["v[0-9]*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: skills/codex-model-bridge
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.12"
+      - name: Check tag and package versions
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import json
+          import os
+          from pathlib import Path
+
+          versions = []
+          for name in ('build_release', 'install'):
+              spec = importlib.util.spec_from_file_location(name, Path('scripts') / (name + '.py'))
+              module = importlib.util.module_from_spec(spec)
+              spec.loader.exec_module(module)
+              versions.append(module.VERSION)
+          versions.append(json.loads(Path('plugin.json').read_text())['version'])
+          expected_tag = 'v' + versions[0]
+          if len(set(versions)) != 1 or os.environ['RELEASE_TAG'] != expected_tag:
+              raise SystemExit('Release tag, plugin version, installer version and builder version must agree.')
+          print('Package version:', versions[0])
+          PY
+      - name: Run offline tests
+        run: python -m unittest discover -s tests -v
+      - name: Build portable Mac ZIP
+        run: python scripts/build_release.py
+      - name: Publish ZIP and checksum
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$RELEASE_TAG" --generate-notes
+          fi
+          gh release upload "$RELEASE_TAG" dist/*.zip dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber

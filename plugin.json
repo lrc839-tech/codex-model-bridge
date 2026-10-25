@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "codex-model-bridge",
+  "version": "0.1.0",
+  "description": "Codex 负责规划与最终决定，按需调用兼容 Chat Completions 的模型执行和初审。",
+  "author": {"name": "lrc839-tech"},
+  "homepage": "https://github.com/lrc839-tech/codex-model-bridge",
+  "repository": "https://github.com/lrc839-tech/codex-model-bridge",
+  "license": "MIT",
+  "keywords": ["codex", "skills", "deepseek", "qwen", "doubao", "kimi", "glm"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Codex Model Bridge",
+        "shortDescription": "桌面 Codex 规划，其他模型按需执行与初审",
+        "developerName": "lrc839-tech",
+        "category": "Productivity",
+        "websiteURL": "https://github.com/lrc839-tech/codex-model-bridge"
+      }
+    }
+  }
+}

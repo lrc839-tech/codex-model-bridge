@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15-intel]
+        python-version: ["3.9", "3.12"]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONPATH: skills/codex-model-bridge
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run offline tests
+        run: python -m unittest discover -s tests -v
+      - name: Check macOS launchers
+        run: bash -n install.command configure.command uninstall.command scripts/mac_launcher.sh
+      - name: Build portable Mac ZIP
+        run: python scripts/build_release.py
+      - name: Upload preview package
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: mac-install-package
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
